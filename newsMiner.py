@@ -25,6 +25,7 @@ def getRepublicaArticles(linkList):
         meat = parts[1].split('Main Page')[0].strip()
         author = meat[0:meat.index('\n')]
         toReturn.append((header, author, meat))
+        time.sleep(.2)
     return toReturn
 
 '''
