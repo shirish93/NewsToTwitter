@@ -12,10 +12,10 @@ unwanted = ['centre','commission',
 ,' cup', 'summit', 'union', 'region', 'police', 'army', 'constitution'
 , ' party', ' affairs', 'day', 'global ', 'apf ', 'football', 'association', 'the '
 , 'north ', 'south ', 'east ', 'west ', 'minister ', 'president ', 'africa '
-, 'united ', 'democratic ', ' act', 'project', ' limited'
+, 'united ', 'democratic ', ' act', 'project', ' limited', 'rss', 'republica ', ' press'
 ]
 def articleToNames(article):
-  tokens=article.split()
+  tokens=article.split( )
   names=[]
   app = True
   cur=''
@@ -49,15 +49,14 @@ def runDaily():
 
 
 
-
-
-
-
-
-for person in people:
-	for article in allTexts:
-		if person.lower() in article.lower():
-			counter+=1
-			print person+ " was found in"
-
-
+def peopleConversion(allTexts):
+    f = open('nameToUname.txt', 'r')
+    names = [(each.split(':')[0], each.split(':')[1]) for each in f]
+    matches=[]
+    for person in names:
+        for article in allTexts:
+            indexOf = article.lower().index(person[0].lower())
+            if indexOf!=-1:
+                wanted = article[indexOf-50:indexOf+50]
+                #do something
+                pass
