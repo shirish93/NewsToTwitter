@@ -48,15 +48,22 @@ def runDaily():
 
 
 
-
 def peopleConversion(allTexts):
     f = open('nameToUname.txt', 'r')
     names = [(each.split(':')[0], each.split(':')[1]) for each in f]
     matches=[]
     for person in names:
         for article in allTexts:
-            indexOf = article.lower().index(person[0].lower())
-            if indexOf!=-1:
-                wanted = article[indexOf-50:indexOf+50]
-                #do something
-                pass
+	    try:
+		    indexOf = article.lower().index(person[0].lower())
+		    if indexOf!=-1:
+			wanted = article[indexOf-70:indexOf+70]
+			if '.' in wanted and wanted.index('.')<wanted.lower().index(person[0].lower()):
+				wanted = wanted[wanted.index('.')+1:wanted.rindex(' ')]
+			else:
+				wanted = wanted[wanted.index(' '):wanted.rindex(' ')]
+			matches.append(' '.join( wanted.split() )  )
+	    except:
+		
+		    pass
+    return list(set(matches))
