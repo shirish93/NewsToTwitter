@@ -2,6 +2,17 @@ import time
 from bs4 import BeautifulSoup
 import requests
 
+def getKantipurLinks():
+	lastDate = time.time()
+	fmt='%Y/%m/%d'
+	wanted=time.strftime(fmt, time.localtime(lastDate))
+	URL="http://www.ekantipur.com/kantipur/archive.php"
+	g = requests.post(URL, data = {'news_date': wanted})
+	a = BeautifulSoup(g.text)
+	links = a.find_all('a')
+	wanted= [each.get('href') for each in links if 'full-story' in each.get('href')]
+	return wanted
+
 def getEkantipurLinks():
 	lastDate = time.time()
 	fmt='%Y/%m/%d'
