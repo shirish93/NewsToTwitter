@@ -15,6 +15,10 @@ unwanted = ['centre','commission',
 , 'united ', 'democratic ', ' act', 'project', ' limited', 'rss', 'republica ', ' press'
 ]
 def articleToNames(article):
+'''Takes an article, and extracts as many person names as possible,
+    returns a list of names. For a proper noun to be a 'name', it
+    must be more than one word.
+'''
   tokens=article.split( )
   names=[]
   app = True
@@ -36,34 +40,83 @@ def articleToNames(article):
   return names
 
 
-def runDaily():
-    linksList = getEkantipurLinks()
-    articles = fetchEkanArticles(linkList)
-    names = [articleToNames(each[2]) for each in articles]
+def getPeople():
+'''Returns the name-> twitter ID mapping of popular people.
+
+'''
+    f = open('nameToUname.txt', 'r')
+    names = [(each.split(':')[0], each.split(':')[1]) for each in f]
+    f.close()
+    return names
+
+def peopleConversion(allTexts):
+'''Takes a list of articles, and then returns a list of sentences
+   that mention the people we have in our database.
+
+'''
+    matches=[]
+    names = getPeople()
+    for person in names:
+        for article in allTexts:
+            try:
+                indexOf = article.lower().index(person[0].lower())
+                if indexOf!=-1:
+                    wanted = article[indexOf-70:indexOf+70]
+                    if '.' in wanted and wanted.index('.')<wanted.lower().index(person[0].lower()):
+                        wanted = wanted[wanted.index('.')+1:wanted.rindex(' ')]
+                    else:
+                        wanted = wanted[wanted.index(' '):wanted.rindex(' ')]
+                    matches.append(' '.join( wanted.split())  )
+            except:
+                pass
+    return list(set(matches))
+import pdb
+
+
+
+    
+def worker(grabsLinks, fetchesArticles):
+'''Takes to functions: one that returns a list of wanted page URL's, and another
+   that turns those links into articles. Returns a list of sentences
+   with the names of people in the database replaced by their user names
+'''
+    linksList = grabsLinks()
+    articles = fetchesArticles(linksList)
+
+    ###Below is commented out because we want 'smart' recognition of people's names
+    ### and try to search the names online, see if the person matches the person
+    ### in twitter, and then link those two. However, the name 'detector' is not
+    ### working very well...
+    '''names = [articleToNames(each[2]) for each in articles]
     completeNames = []
     for each in names:
         for name in each:
             completeNames.append(each)
+    '''
+    texts = [each[2] for each in articles]
+    connected = peopleConversion(texts)
+    # Now that we have unique lines, we just replace them with people's names
+    #Since one can have more than one person, we need peopleList.
+    names = getPeople()
+    modded=[]
+    for sent in connected:
+        toGO=sent
+        for name in names:
+            if name[0] in sent:
+                toGO=toGO.replace(name[0], name[1])
+        modded.append(' '.join(toGO.split()))
+    return modded
+
+def runDaily():
+'''The driver function that 'runs' the entire thing.
+
+'''
     
+    TKP_sources = worker(getEkantipurLinks, fetchEkanArticles)
+    Repub_sources = worker(getRepublicaLinks, getRepublicaArticles)
+
+
+final = runDaily()
 
 
 
-def peopleConversion(allTexts):
-    f = open('nameToUname.txt', 'r')
-    names = [(each.split(':')[0], each.split(':')[1]) for each in f]
-    matches=[]
-    for person in names:
-        for article in allTexts:
-	    try:
-		    indexOf = article.lower().index(person[0].lower())
-		    if indexOf!=-1:
-			wanted = article[indexOf-70:indexOf+70]
-			if '.' in wanted and wanted.index('.')<wanted.lower().index(person[0].lower()):
-				wanted = wanted[wanted.index('.')+1:wanted.rindex(' ')]
-			else:
-				wanted = wanted[wanted.index(' '):wanted.rindex(' ')]
-			matches.append(' '.join( wanted.split() )  )
-	    except:
-		
-		    pass
-    return list(set(matches))
