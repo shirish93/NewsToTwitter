@@ -1,6 +1,6 @@
 
 
-from newsMiner import getEkantipurLinks, fetchEkanArticles
+from newsMiner import getEkantipurLinks, fetchEkanArticles, getRepublicaLinks,getRepublicaArticles
 
 unwanted = ['centre','commission',
 ' bank','nepal ','international','development','.',',','court','US ','UK ' ,'league','agency',
@@ -14,11 +14,14 @@ unwanted = ['centre','commission',
 , 'north ', 'south ', 'east ', 'west ', 'minister ', 'president ', 'africa '
 , 'united ', 'democratic ', ' act', 'project', ' limited', 'rss', 'republica ', ' press'
 ]
+
+path = ''
+#path = '/h/spokha01/runningBots/newsToTwitter/'
 def articleToNames(article):
-'''Takes an article, and extracts as many person names as possible,
-    returns a list of names. For a proper noun to be a 'name', it
-    must be more than one word.
-'''
+  '''Takes an article, and extracts as many person names as possible,
+  returns a list of names. For a proper noun to be a 'name', it
+  must be more than one word.
+  '''
   tokens=article.split( )
   names=[]
   app = True
@@ -41,19 +44,19 @@ def articleToNames(article):
 
 
 def getPeople():
-'''Returns the name-> twitter ID mapping of popular people.
+    '''Returns the name-> twitter ID mapping of popular people.
 
-'''
-    f = open('nameToUname.txt', 'r')
+    '''
+    f = open(path+'nameToUname.txt', 'r')
     names = [(each.split(':')[0], each.split(':')[1]) for each in f]
     f.close()
     return names
 
 def peopleConversion(allTexts):
-'''Takes a list of articles, and then returns a list of sentences
-   that mention the people we have in our database.
+    '''Taaes a list of articles, and then returns a list of sentences
+    that mention the people we have in our database.
 
-'''
+    '''
     matches=[]
     names = getPeople()
     for person in names:
@@ -76,10 +79,10 @@ import pdb
 
     
 def worker(grabsLinks, fetchesArticles):
-'''Takes to functions: one that returns a list of wanted page URL's, and another
-   that turns those links into articles. Returns a list of sentences
-   with the names of people in the database replaced by their user names
-'''
+    '''Takes to functions: one that returns a list of wanted page URL's, and another
+    that turns those links into articles. Returns a list of sentences
+    with the names of people in the database replaced by their user names
+    '''
     linksList = grabsLinks()
     articles = fetchesArticles(linksList)
 
@@ -107,16 +110,50 @@ def worker(grabsLinks, fetchesArticles):
         modded.append(' '.join(toGO.split()))
     return modded
 
-def runDaily():
-'''The driver function that 'runs' the entire thing.
+def writeToBuffer(tweets,mode='a'):
+    f = open("buffer.txt", mode)
+    for each in tweets:
+        toWrite=str(each)+'\n'
+        if len(toWrite.split())>0:
+            f.write(toWrite)
+    f.close()
 
-'''
-    
+def stealFromBuffer():
+    try:
+        f = open("buffer.txt", "r")
+    except:
+        f.close()
+        return []
+    tweets = [each for each in f]
+    f.close()
+
+    if tweets:
+        writeToBuffer(tweets[1:],mode='w')
+        return tweets[0]
+    return []
+
+
+import time
+def postMessage(inputs):
+    print inputs+'\n'
+
+def runDaily():
+    '''The driver function that 'runs' the entire thing.
+
+    '''    
     TKP_sources = worker(getEkantipurLinks, fetchEkanArticles)
     Repub_sources = worker(getRepublicaLinks, getRepublicaArticles)
+    TKP_sources.extend(Repub_sources)
+    writeToBuffer(TKP_sources)
+    toTweet = stealFromBuffer()
+    while toTweet:
+        postMessage(toTweet)
+        time.sleep(60)
+        toTweet = stealFromBuffer()
+    
 
 
-final = runDaily()
+runDaily()
 
 
 
